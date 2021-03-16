@@ -2,6 +2,7 @@
 import torch
 import os
 import cv2
+import glob
 import numpy as np
 from pathlib import Path
 from datetime import datetime
@@ -9,8 +10,7 @@ import constants
 
 classes=[constants.Masked,constants.UnMasked,constants.NonPerson]
 
-DATA_REBUILD=True
-
+DATA_REBUILD=False
 
 class ImageClassifier():
     ImageDimensions=constants.imageSize
@@ -47,7 +47,10 @@ class ImageClassifier():
 if DATA_REBUILD:
     batchData=ImageClassifier()
     batchData.ImageDataSetPrep()
-
+else:
+    files = glob.glob(constants.training_dataSavedPath+'*')
+    latest_file = max(files, key=os.path.getctime)
+    print(latest_file)
         
         
     
