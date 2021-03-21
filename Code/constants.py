@@ -2,7 +2,12 @@
 
 
 
-Base_Path="D:/Study_Masters/6721-Intro to AI/Project/AI-project-1/Images"
+Base_Path="C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images"
+MODEL="C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\model"
+
+RESIZED = "C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images\\resized"
+TEST = "C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images\\test"
+
 
 Masked_Folder="WithMaskIndi"
 
