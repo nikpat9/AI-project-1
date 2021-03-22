@@ -42,10 +42,10 @@ def generateRecallResult(test_data, test_prediction):
     return recall
 
 
-def generateF1MeasureResult(precision, recall):
-    f1measure = 2 * (precision * recall) / (precision + recall)
+def generateF1MeasureResult(test_data, test_prediction):
+    from sklearn.metrics import f1_score
+    f1measure = f1_score(test_data, test_prediction, average=None)
     return f1measure
-
 
 
 
@@ -92,6 +92,7 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
+    """
     for i, data in enumerate(trainloader, 0):
         inputs, labels = data
         optimizer.zero_grad()
@@ -99,18 +100,29 @@ if __name__ == '__main__':
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
+    """
+    # Save
+    PATH = "state_dict_model.pt"
+    net = torch.load(PATH)
+    #torch.save(net, PATH)
+    
     pred_data=[]
     test_data=[]
     for i, data in enumerate(testloader, 0):
         images, labels = data
         outputs = net(images)
-        test_data.append(labels)
+        test_data.append(labels.numpy().tolist())
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
-        test_data.append(predicted)
+        pred_data.append(predicted.numpy().tolist())
         correct += (predicted == labels).sum().item()
-    print('Accuracy of the network on the 1 test images: %d %%' % (
+    print('Accuracy of the network on the  test images: %d %%' % (
             100 * correct / total))
+    
+    pred_data =pred_data[0]
+    test_data = test_data[0]
+    print(len(test_data)," and ",len(pred_data))
+    print("TST DATA" ,test_data,"PRED DATA::",pred_data)
     print("confusion Matrix",generateConfusionMatrix(test_data,pred_data))
     print("precision Result",generatePrecisionResult(test_data,pred_data))
     print("Recall Result",generateRecallResult(test_data,pred_data))
