@@ -6,11 +6,10 @@ from torch.utils.data import Dataset
 from torchvision import datasets, transforms
 import torchvision
 
-import constants
 from sklearn.metrics import confusion_matrix
 from torch import nn, optim
 
-classes = [constants.Masked, constants.UnMasked, constants.NonPerson]
+
 
 
 def generateConfusionMatrix(test_data, test_prediction):
@@ -48,41 +47,7 @@ def generateF1MeasureResult(precision, recall):
     return f1measure
 
 
-class ImageClassifier():
-    ImageDimensions = constants.imageSize
-    trained_Data = []
-    Labels = {constants.NonPerson: 2, constants.Masked: 1, constants.UnMasked: 0}
 
-    def ImageDataSetPrep(self):
-        path = constants.training_dataSavedPath + constants.trained_datasetName
-        base_Path = Path(constants.Base_Path)
-        print('path', constants.Base_Path)
-        masked_Path = base_Path / constants.Masked_Folder
-        unmasked_Path = base_Path / constants.UnMasked_Folder
-        nonPerson_Path = base_Path / constants.NonPerson_Folder
-        path_dirs = [[nonPerson_Path, 2], [masked_Path, 1], [unmasked_Path, 0]]
-        count = 0
-        if not os.path.exists(base_Path):
-            raise Exception("The data path doesn't exist")
-        for Dir_path, label in path_dirs:
-            print("Current Label is ", label)
-            for image in os.listdir(Dir_path):
-                imagePath = os.path.join(Dir_path, image)
-                try:
-                    img = cv2.imread(imagePath)
-                    img = cv2.resize(img, (self.ImageDimensions, self.ImageDimensions))
-                    print(constants.RESIZED + "\image" + str(count) + ".jpg")
-                    if label == 2:
-                        cv2.imwrite(constants.RESIZED + "\class2\image" + str(count) + ".jpg", img)
-                    if label == 1:
-                        cv2.imwrite(constants.RESIZED + "\class1\image" + str(count) + ".jpg", img)
-                    if label == 0:
-                        cv2.imwrite(constants.RESIZED + "\class0\image" + str(count) + ".jpg", img)
-                    count += 1
-                except Exception as e:
-                    print('Error Occured while processing images')
-                    print(e)
-                    pass
 
 
 class Net(nn.Module):
@@ -117,10 +82,10 @@ if __name__ == '__main__':
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Normalize((0.5,), (0.5,)),
                                     ])
-    trainset = torchvision.datasets.ImageFolder(root=constants.RESIZED, transform=transform)
+    trainset = torchvision.datasets.ImageFolder(root="../Images/resized", transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=8)
-    testset = torchvision.datasets.ImageFolder(root=constants.TEST, transform=transform)
-    testloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=8)
+    testset = torchvision.datasets.ImageFolder(root="../Images/test", transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=True, num_workers=8)
     net = Net()
     correct = 0
     total = 0
@@ -134,13 +99,21 @@ if __name__ == '__main__':
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-
+    pred_data=[]
+    test_data=[]
     for i, data in enumerate(testloader, 0):
         images, labels = data
         outputs = net(images)
+        test_data.append(labels)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
+        test_data.append(predicted)
         correct += (predicted == labels).sum().item()
     print('Accuracy of the network on the 1 test images: %d %%' % (
             100 * correct / total))
+    print("confusion Matrix",generateConfusionMatrix(test_data,pred_data))
+    print("precision Result",generatePrecisionResult(test_data,pred_data))
+    print("Recall Result",generateRecallResult(test_data,pred_data))
+    print("F1 Measure ", generateF1MeasureResult(test_data,pred_data))
+    
 
