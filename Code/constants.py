@@ -2,11 +2,15 @@
 
 
 
-Base_Path="C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images"
+#Base_Path="C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images"
+Base_Path="../AI-project-1/Images"
 MODEL="C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\model"
 
-RESIZED = "C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images\\resized"
-TEST = "C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images\\test"
+#RESIZED = "C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images\\resized"
+#TEST = "C:\\Users\\Admin\\PycharmProjects\\AI-project-1\\Images\\test"
+
+RESIZED = "../Images/resized"
+TEST = "../Images/test"
 
 
 Masked_Folder="WithMaskIndi"
