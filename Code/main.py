@@ -1,33 +1,53 @@
 import torch
 import os
 import cv2
-from pathlib import Path
+from path import Path
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms
 import torchvision
-
 from sklearn.metrics import confusion_matrix
 from torch import nn, optim
+from Code import constants
+import gc
 
 
+def ImageDataSetPrep(data_type):
+    if data_type == "test":
+        path_test_train = constants.TEST
+        base_Path = Path(constants.Base_Path)
+        masked_Path = base_Path / constants.Masked_Folder_test
+        unmasked_Path = base_Path / constants.UnMasked_Folder_test
+        nonPerson_Path = base_Path / constants.NonPerson_Folder_test
+    else:
+        path_test_train = constants.Train
+        base_Path = Path(constants.Base_Path)
+        masked_Path = base_Path / constants.Masked_Folder_train
+        unmasked_Path = base_Path / constants.UnMasked_Folder_train
+        nonPerson_Path = base_Path / constants.NonPerson_Folder_train
+
+    if len(os.listdir(masked_Path)) != 0 or len(os.listdir(unmasked_Path)) != 0 or len(os.listdir(nonPerson_Path)) != 0:
+        path_dirs = [[nonPerson_Path, 2], [masked_Path, 1], [unmasked_Path, 0]]
+        if not os.path.exists(base_Path):
+            raise Exception("The data path doesn't exist")
+        for Dir_path, label in path_dirs:
+            for image in os.listdir(Dir_path):
+                imagePath = os.path.join(Dir_path, image)
+                try:
+                    img = cv2.imread(imagePath)
+                    img = cv2.resize(img, (constants.imageSize, constants.imageSize))
+                    if label == 2:
+                        cv2.imwrite(path_test_train + "\class2\\" + image + ".jpg", img)
+                    if label == 1:
+                        cv2.imwrite(path_test_train + "\class1\\" + image + ".jpg", img)
+                    if label == 0:
+                        cv2.imwrite(path_test_train + "\class0\\" + image + ".jpg", img)
+                except:
+                    print('Error Occured while processing images')
+                    pass
 
 
 def generateConfusionMatrix(test_data, test_prediction):
     print("Confusion Matrix:\n", confusion_matrix(test_data, test_prediction))
-
-
-def generateAccuracyResult(test_data, cnn):
-    correct = 0
-    total = 0
-    test_data_size = len(test_data)
-    with torch.no_grad():
-        for images, labels in test_data:
-            outputs = cnn(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    accuracy = 100 * (correct / total)
-    return accuracy
 
 
 def generatePrecisionResult(test_data, test_prediction):
@@ -46,8 +66,6 @@ def generateF1MeasureResult(test_data, test_prediction):
     from sklearn.metrics import f1_score
     f1measure = f1_score(test_data, test_prediction, average=None)
     return f1measure
-
-
 
 
 class Net(nn.Module):
@@ -79,53 +97,49 @@ class Net(nn.Module):
 
 
 if __name__ == '__main__':
+    ImageDataSetPrep("test")
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Normalize((0.5,), (0.5,)),
                                     ])
-    trainset = torchvision.datasets.ImageFolder(root="../Images/resized", transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=8)
-    testset = torchvision.datasets.ImageFolder(root="../Images/test", transform=transform)
+    testset = torchvision.datasets.ImageFolder(root=constants.TEST, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=True, num_workers=8)
-    net = Net()
+    PATH = "state_dict_model.pt"
+    if not os.path.exists("state_dict_model.pt"):
+        ImageDataSetPrep("train")
+        trainset = torchvision.datasets.ImageFolder(root=constants.Train, transform=transform)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=8)
+        net = Net()
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
+        for epoch in range(constants.EPOCH):
+            for i, data in enumerate(trainloader, 0):
+                inputs, labels = data
+                optimizer.zero_grad()
+                outputs = net.forward(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                gc.collect()
+
+        # Save
+        torch.save(net, PATH)
+    else:
+        net = torch.load(PATH)
+    pred_data = []
+    test_data = []
     correct = 0
     total = 0
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-
-    """
-    for i, data in enumerate(trainloader, 0):
-        inputs, labels = data
-        optimizer.zero_grad()
-        outputs = net.forward(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-    """
-    # Save
-    PATH = "state_dict_model.pt"
-    net = torch.load(PATH)
-    #torch.save(net, PATH)
-    
-    pred_data=[]
-    test_data=[]
     for i, data in enumerate(testloader, 0):
         images, labels = data
         outputs = net(images)
-        test_data.append(labels.numpy().tolist())
+        test_data.extend(labels.numpy().tolist())
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
-        pred_data.append(predicted.numpy().tolist())
+        pred_data.extend(predicted.numpy().tolist())
         correct += (predicted == labels).sum().item()
     print('Accuracy of the network on the  test images: %d %%' % (
             100 * correct / total))
-    
-    pred_data =pred_data[0]
-    test_data = test_data[0]
-    print(len(test_data)," and ",len(pred_data))
-    print("TST DATA" ,test_data,"PRED DATA::",pred_data)
-    print("confusion Matrix",generateConfusionMatrix(test_data,pred_data))
-    print("precision Result",generatePrecisionResult(test_data,pred_data))
-    print("Recall Result",generateRecallResult(test_data,pred_data))
-    print("F1 Measure ", generateF1MeasureResult(test_data,pred_data))
-    
-
+    generateConfusionMatrix(test_data, pred_data)
+    print("precision Result", generatePrecisionResult(test_data, pred_data))
+    print("Recall Result", generateRecallResult(test_data, pred_data))
+    print("F1 Measure ", generateF1MeasureResult(test_data, pred_data))
