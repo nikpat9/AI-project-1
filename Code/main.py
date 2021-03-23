@@ -52,19 +52,19 @@ def generateConfusionMatrix(test_data, test_prediction):
 
 def generatePrecisionResult(test_data, test_prediction):
     from sklearn.metrics import precision_score
-    precision = precision_score(test_data, test_prediction, average=None)
+    precision = precision_score(test_data, test_prediction, average=None,labels=[0,1,2])
     return precision
 
 
 def generateRecallResult(test_data, test_prediction):
     from sklearn.metrics import recall_score
-    recall = recall_score(test_data, test_prediction, average=None)
+    recall = recall_score(test_data, test_prediction, average=None,labels=[0,1,2])
     return recall
 
 
 def generateF1MeasureResult(test_data, test_prediction):
     from sklearn.metrics import f1_score
-    f1measure = f1_score(test_data, test_prediction, average=None)
+    f1measure = f1_score(test_data, test_prediction, average=None,labels=[0,1,2])
     return f1measure
 
 
@@ -129,6 +129,7 @@ if __name__ == '__main__':
     test_data = []
     correct = 0
     total = 0
+    
     for i, data in enumerate(testloader, 0):
         images, labels = data
         outputs = net(images)
@@ -137,9 +138,29 @@ if __name__ == '__main__':
         total += labels.size(0)
         pred_data.extend(predicted.numpy().tolist())
         correct += (predicted == labels).sum().item()
-    print('Accuracy of the network on the  test images: %d %%' % (
+
+    print('Accuracy of the network on ',len(test_data), ' test images: %d %%' % (
             100 * correct / total))
+    
     generateConfusionMatrix(test_data, pred_data)
-    print("precision Result", generatePrecisionResult(test_data, pred_data))
-    print("Recall Result", generateRecallResult(test_data, pred_data))
-    print("F1 Measure ", generateF1MeasureResult(test_data, pred_data))
+    
+    precision_result =generatePrecisionResult(test_data, pred_data)
+    if len(precision_result) ==3 :
+        print("****Precision Metrics****")
+        print("Person Without Mask::",precision_result[0])
+        print("Person With Mask::",precision_result[1])
+        print("Not a Person::",precision_result[2])
+
+    recall_result = generateRecallResult(test_data, pred_data)
+    if len(recall_result) ==3 :
+        print("****Recall Metrics****")
+        print("Person Without Mask::",recall_result[0])
+        print("Person With Mask::",recall_result[1])
+        print("Not a Person::",recall_result[2])
+    
+    f1_measure_result = generateF1MeasureResult(test_data, pred_data)
+    if len(f1_measure_result) ==3 :
+        print("****F1 Measure Metrics****")
+        print("Person Without Mask::",f1_measure_result[0])
+        print("Person With Mask::",f1_measure_result[1])
+        print("Not a Person::",f1_measure_result[2])
