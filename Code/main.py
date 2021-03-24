@@ -47,7 +47,7 @@ def ImageDataSetPrep(data_type):
 
 
 def generateConfusionMatrix(test_data, test_prediction):
-    print("Confusion Matrix:\n", confusion_matrix(test_data, test_prediction))
+    print("Confusion Matrix:\n", confusion_matrix(test_data, test_prediction,labels=[0,1,2]))
 
 
 def generatePrecisionResult(test_data, test_prediction):
@@ -142,6 +142,7 @@ if __name__ == '__main__':
     print('Accuracy of the network on ',len(test_data), ' test images: %d %%' % (
             100 * correct / total))
     
+    print("Confusion Matrix :: [PersonWithoutMask  PersonWithMask  NotAPerson]")
     generateConfusionMatrix(test_data, pred_data)
     
     precision_result =generatePrecisionResult(test_data, pred_data)
