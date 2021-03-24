@@ -1,23 +1,23 @@
 Steps to run the code:
-
+(PYTHON VERSION: 3.8)
 There are Two folders of importance :
 1) code : this folder consists the code to Train, Test and Evaluate the CNN. It also has the trained model saved in the same folder.
   - Run the main.py. it will automatically test the model on the images and will out put the accuracys, confusion matrix, precision , Recall and F1 measure.
-   we have a total of 528 test images across all labels. we have trained the model on 3000+ images across all labels
+   we have a total of 924 test images across all labels. we have trained the model on 2740 images across all labels
 2) Images :  there are several folders here
     -    NotPerson          - contains raw images of objects and other stuff (there are two folder test and train).
-    -    test               - contains the pre processed test images(there are three folders(labels) here class0 is individual people without mask , class 1 is individual people with mask and class 2 is No person or objects).
-    -    train              - contains the pre proessed train images(there are three folders(labels) here class0 is individual people without mask , class 1 is individual people with mask and class 2 is No person or objects).
     -    WithMaskIndi       - contains raw images of individual people with mask (there are two folder test and train).
     -    WithoutMaskIndi    - contains raw images of individual people without mask (there are two folder test and train).
-here we take the images from NotPerson, WithMaskIndi , WthoutMaskIndi and pre process them (size and normalization) and store them in test and train.
+    -    test               - contains the pre processed test images(there are three folders(labels) here class0 is individual people without mask , class 1 is individual people with mask and class 2 is No person or objects).
+    -    train              - contains the pre proessed train images(there are three folders(labels) here class0 is individual people without mask , class 1 is individual people with mask and class 2 is No person or objects).
+We take the images from NotPerson, WithMaskIndi , WthoutMaskIndi and pre process them (size and normalization) and store them in test and train.
 
 we have already pre proccesed and saved the images in test and train folders.
 
 NEW TRAIN DATA:
 1) add the images to the corresponding train folders (NotPerson, WithMaskIndi , WthoutMaskIndi )
 2) delete the images in all three folders (class0, class1, class2) of the train folder in images folder.
-3) delete the save model from the Code folder (the name of the saved model is "state_dict_model.pt")
+3) delete the save model from the Code folder (the name of the saved model is "trained_cnn_Model.pt")
 4) Run main.py
 
 

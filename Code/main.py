@@ -42,7 +42,7 @@ def ImageDataSetPrep(data_type):
                     if label == 0:
                         cv2.imwrite(path_test_train + "\class0\\" + image + ".jpg", img)
                 except:
-                    print('Error Occured while processing images')
+                    print('Error Occured while processing images',imagePath)
                     pass
 
 
@@ -103,23 +103,33 @@ if __name__ == '__main__':
                                     ])
     testset = torchvision.datasets.ImageFolder(root=constants.TEST, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=True, num_workers=8)
-    PATH = "state_dict_model.pt"
-    if not os.path.exists("state_dict_model.pt"):
+    PATH = "trained_cnn_Model.pt"
+    if not os.path.exists(PATH):
         ImageDataSetPrep("train")
         trainset = torchvision.datasets.ImageFolder(root=constants.Train, transform=transform)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=8)
         net = Net()
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
+
         for epoch in range(constants.EPOCH):
+            correct = 0
+            total = 0
             for i, data in enumerate(trainloader, 0):
                 inputs, labels = data
                 optimizer.zero_grad()
                 outputs = net.forward(inputs)
+                #TEST ACCURACY
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+                #END
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
                 gc.collect()
+            print('Accuracy of the network on Epoch',epoch, ': %d %%' % (
+            100 * correct / total))
 
         # Save
         torch.save(net, PATH)
