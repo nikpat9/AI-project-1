@@ -148,12 +148,10 @@ if __name__ == '__main__':
         total += labels.size(0)
         pred_data.extend(predicted.numpy().tolist())
         correct += (predicted == labels).sum().item()
-
     print('Accuracy of the network on ',len(test_data), ' test images: %d %%' % (
             100 * correct / total))
     
     print("****Confusion Metrics****")
-    print("[PersonWithoutMask  PersonWithMask  NotAPerson]")
     generateConfusionMatrix(test_data, pred_data)
     
     precision_result =generatePrecisionResult(test_data, pred_data)
