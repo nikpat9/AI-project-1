@@ -5,7 +5,9 @@ from path import Path
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms
 import torchvision
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+from sklearn.metrics import plot_confusion_matrix
 from torch import nn, optim
 from Code import constants
 import gc
@@ -47,8 +49,10 @@ def ImageDataSetPrep(data_type):
 
 
 def generateConfusionMatrix(test_data, test_prediction):
-    print(confusion_matrix(test_data, test_prediction,labels=[0,1,2]))
-
+    cm = confusion_matrix(test_data, test_prediction,labels=[0,1,2])
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=["WithoutMask","WithMask","NotAPerson"])
+    disp.plot()
+    
 
 def generatePrecisionResult(test_data, test_prediction):
     from sklearn.metrics import precision_score
@@ -67,6 +71,34 @@ def generateF1MeasureResult(test_data, test_prediction):
     f1measure = f1_score(test_data, test_prediction, average=None,labels=[0,1,2])
     return f1measure
 
+def evaluateCNNModel(test_data, pred_data):
+    precision_result =generatePrecisionResult(test_data, pred_data)
+    if len(precision_result) ==3 :
+        print("****Precision Metrics****")
+        print("Person Without Mask::",round(precision_result[0]*100,2) ,"%")
+        print("Person With Mask::",round(precision_result[1] *100,2),"%")
+        print("Not a Person::",round(precision_result[2] *100,2),"%")
+
+    print("\n")
+    recall_result = generateRecallResult(test_data, pred_data)
+    if len(recall_result) ==3 :
+        print("****Recall Metrics****")
+        print("Person Without Mask::",round(recall_result[0]*100,2),"%")
+        print("Person With Mask::",round(recall_result[1]*100,2),"%")
+        print("Not a Person::",round(recall_result[2]*100,2),"%")
+
+    print("\n")
+    f1_measure_result = generateF1MeasureResult(test_data, pred_data)
+    if len(f1_measure_result) ==3 :
+        print("****F1 Measure Metrics****")
+        print("Person Without Mask::",round(f1_measure_result[0]*100,2),"%")
+        print("Person With Mask::",round(f1_measure_result[1]*100,2),"%")
+        print("Not a Person::",round(f1_measure_result[2]*100,2),"%")
+
+    print("\n")
+    print("****Confusion Metrics****")
+    generateConfusionMatrix(test_data, pred_data)
+        
 
 class Net(nn.Module):
 
@@ -150,27 +182,7 @@ if __name__ == '__main__':
         correct += (predicted == labels).sum().item()
     print('Accuracy of the network on ',len(test_data), ' test images: %d %%' % (
             100 * correct / total))
+    print("\n")
     
-    print("****Confusion Metrics****")
-    generateConfusionMatrix(test_data, pred_data)
+    evaluateCNNModel(test_data, pred_data)
     
-    precision_result =generatePrecisionResult(test_data, pred_data)
-    if len(precision_result) ==3 :
-        print("****Precision Metrics****")
-        print("Person Without Mask::",precision_result[0])
-        print("Person With Mask::",precision_result[1])
-        print("Not a Person::",precision_result[2])
-
-    recall_result = generateRecallResult(test_data, pred_data)
-    if len(recall_result) ==3 :
-        print("****Recall Metrics****")
-        print("Person Without Mask::",recall_result[0])
-        print("Person With Mask::",recall_result[1])
-        print("Not a Person::",recall_result[2])
-    
-    f1_measure_result = generateF1MeasureResult(test_data, pred_data)
-    if len(f1_measure_result) ==3 :
-        print("****F1 Measure Metrics****")
-        print("Person Without Mask::",f1_measure_result[0])
-        print("Person With Mask::",f1_measure_result[1])
-        print("Not a Person::",f1_measure_result[2])
