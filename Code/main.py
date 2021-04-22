@@ -9,6 +9,7 @@ from torch import nn, optim
 from Code import constants
 from Code import metricsEvaluation
 import gc
+import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 
@@ -105,7 +106,33 @@ def trainModel(net, trainloader):
          #       100 * correct / total))
     return net
 
+image = []
+pred_data = []
+test_data = []
+def eval_model(net, testloader, save):
 
+    correct = 0
+    total = 0
+    count =0
+    for i, data in enumerate(testloader, 0):
+        images, labels = data
+        outputs = net(images)
+        test_data.extend(labels.numpy().tolist())
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        pred_data.extend(predicted.numpy().tolist())
+        correct += (predicted == labels).sum().item()
+        if save:
+            sample_fname, val = testloader.dataset.samples[i]
+            image.append(sample_fname)
+    """
+    print('Accuracy of the network on ', len(test_data), ' test images: %d %%' % (
+            100 * correct / total))
+    print("\n")
+    """
+    return (test_data, pred_data)
+
+"""
 def eval_model(net, testloader):
     pred_data = []
     test_data = []
@@ -124,7 +151,7 @@ def eval_model(net, testloader):
             100 * correct / total))
     print("\n")
     return (test_data, pred_data)
-
+"""
 
 if __name__ == '__main__':
     # ImageDataSetPrep("test")
@@ -132,7 +159,7 @@ if __name__ == '__main__':
                                          transforms.ToTensor()])
     testset = torchvision.datasets.ImageFolder(root=constants.TEST, transform=data_transform)
 
-    testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=True, num_workers=8)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=True, num_workers=8)
 
     PATH = "trained_cnn_Model.pt"
     if not os.path.exists(PATH):
@@ -154,7 +181,7 @@ if __name__ == '__main__':
             trainModel(net, trainloader)
             #Changes modified by Pushpa
             print("******Result Metrics for FOLD->",i,"******")
-            test_d,pred_d = eval_model(net, validloader)
+            test_d,pred_d = eval_model(net, validloader,False)
             metricsEvaluation.evaluateCNNModel(test_d, pred_d)
             
         # Save
@@ -164,6 +191,9 @@ if __name__ == '__main__':
         net = torch.load(PATH)
     
     print("Evaluating the Test Data from ::",constants.TEST)
-    test_data, pred_data = eval_model(net, testloader)
+    test_data, pred_data = eval_model(net, testloader,True)
+    data = {"images": image, "expected": test_data, "predicted": pred_data}
+    print(data)
+    pd.DataFrame(data, columns=["images", "expected", "predicted"]).to_csv(path_or_buf='output.csv')
     metricsEvaluation.evaluateCNNModel(test_data, pred_data)
    
