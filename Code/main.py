@@ -84,7 +84,7 @@ def trainModel(net, trainloader):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.005, momentum=0.9)
 
-    for epoch in range(2):
+    for epoch in range(10):
         correct = 0
         total = 0
         for i, data in enumerate(trainloader, 0):
@@ -101,8 +101,8 @@ def trainModel(net, trainloader):
             # END
             gc.collect()
             torch.cuda.empty_cache()
-        print('Accuracy of the network on Epoch', epoch, ': %d %%' % (
-                100 * correct / total))
+        #print('Accuracy of the network on Epoch', epoch, ': %d %%' % (
+         #       100 * correct / total))
     return net
 
 
@@ -135,7 +135,6 @@ if __name__ == '__main__':
     testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=True, num_workers=8)
 
     PATH = "trained_cnn_Model.pt"
-    K_fold_result = []
     if not os.path.exists(PATH):
 
         skf = StratifiedKFold(n_splits=10)
@@ -153,14 +152,18 @@ if __name__ == '__main__':
             validloader = torch.utils.data.DataLoader(test, batch_size=32, shuffle=True, num_workers=0,
                                                       pin_memory=False)
             trainModel(net, trainloader)
-            K_fold_result.append(eval_model(net, validloader))
+            #Changes modified by Pushpa
+            print("******Result Metrics for FOLD->",i,"******")
+            test_d,pred_d = eval_model(net, validloader)
+            metricsEvaluation.evaluateCNNModel(test_d, pred_d)
+            
         # Save
         torch.save(net, PATH)
     else:
+        print("Loading Existing Train Model from ....",PATH)
         net = torch.load(PATH)
+    
+    print("Evaluating the Test Data from ::",constants.TEST)
     test_data, pred_data = eval_model(net, testloader)
     metricsEvaluation.evaluateCNNModel(test_data, pred_data)
-    print("__________________________________________________________________________________________________")
-    for i in K_fold_result:
-        test_data, pred_data = K_fold_result[i]
-        metricsEvaluation.evaluateCNNModel(test_data, pred_data)
+   
