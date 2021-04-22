@@ -58,17 +58,17 @@ class Net(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn_layers = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=100, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=1, out_channels=100, kernel_size=3,stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(in_channels=100, out_channels=128, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),  # output: 128 x 8 x 8
+            nn.MaxPool2d(2, 2),  # output: 128 x 50 x 50
 
             nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),  # output: 256 x 4 x 4
+            nn.MaxPool2d(2, 2),  # output: 256 x 25 x 25
 
             nn.Flatten(),
             nn.Linear(160000, 512),
