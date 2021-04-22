@@ -154,7 +154,7 @@ def eval_model(net, testloader):
 """
 
 if __name__ == '__main__':
-    # ImageDataSetPrep("test")
+    ImageDataSetPrep("test")
     data_transform = transforms.Compose([transforms.Grayscale(num_output_channels=1),
                                          transforms.ToTensor()])
     testset = torchvision.datasets.ImageFolder(root=constants.TEST, transform=data_transform)
@@ -163,12 +163,11 @@ if __name__ == '__main__':
 
     PATH = "trained_cnn_Model.pt"
     if not os.path.exists(PATH):
-
+        ImageDataSetPrep("train")
         skf = StratifiedKFold(n_splits=10)
         trainset = torchvision.datasets.ImageFolder(root=constants.Train, transform=data_transform)
         for i, (train_index, valid_index) in enumerate(skf.split(trainset, trainset.targets)):
             net = Net()
-            # ImageDataSetPrep("train")
             data_transform = transforms.Compose([transforms.Grayscale(num_output_channels=1),
                                                  transforms.ToTensor()])
             train = torch.utils.data.Subset(trainset, train_index)
