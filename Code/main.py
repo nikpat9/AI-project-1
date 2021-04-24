@@ -12,6 +12,8 @@ import gc
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
+TESTMALE = "../Images/testMale"
+TESTFEMALE = "../Images/testFemale"
 
 def ImageDataSetPrep(data_type):
     if data_type == "test":
@@ -106,16 +108,15 @@ def trainModel(net, trainloader):
          #       100 * correct / total))
     return net
 
-image = []
-pred_data = []
-test_data = []
 def eval_model(net, testloader, save):
-
     correct = 0
     total = 0
-    count =0
+    image = []
+    pred_data = []
+    test_data = []
     for i, data in enumerate(testloader, 0):
         images, labels = data
+        # 32plt.plot(images.numpy())
         outputs = net(images)
         test_data.extend(labels.numpy().tolist())
         _, predicted = torch.max(outputs.data, 1)
@@ -123,43 +124,50 @@ def eval_model(net, testloader, save):
         pred_data.extend(predicted.numpy().tolist())
         correct += (predicted == labels).sum().item()
         if save:
-            sample_fname, val = testloader.dataset.samples[i]
+            sample_fname, _ = testloader.dataset.samples[i]
             image.append(sample_fname)
-    """
+
     print('Accuracy of the network on ', len(test_data), ' test images: %d %%' % (
             100 * correct / total))
     print("\n")
-    """
-    return (test_data, pred_data)
+    return (image, test_data, pred_data)
 
-"""
-def eval_model(net, testloader):
-    pred_data = []
-    test_data = []
-    correct = 0
-    total = 0
 
-    for i, data in enumerate(testloader, 0):
-        images, labels = data
-        outputs = net(images)
-        test_data.extend(labels.numpy().tolist())
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        pred_data.extend(predicted.numpy().tolist())
-        correct += (predicted == labels).sum().item()
-    print('Accuracy of the network on ', len(test_data), ' test images: %d %%' % (
-            100 * correct / total))
-    print("\n")
-    return (test_data, pred_data)
-"""
+def bais_test_male(net):
+    print("---------------------------MALE BIAS REPORT---------------------------------\n")
+    data_transform = transforms.Compose([transforms.Grayscale(num_output_channels=1),
+        transforms.ToTensor(),
+        transforms.Resize((constants.imageSize, constants.imageSize))])
+    Male_testset = torchvision.datasets.ImageFolder(root=TESTMALE, transform=data_transform)
+    Male_testloader = torch.utils.data.DataLoader(Male_testset, batch_size=1, shuffle=True, num_workers=8)
+    image, test_data, pred_data = eval_model(net, Male_testloader, True)
+    data = {"images": image, "expected": test_data, "predicted": pred_data}
+    pd.DataFrame(data, columns=["images", "expected", "predicted"]).to_csv(path_or_buf='Male.csv')
+    metricsEvaluation.evaluateCNNModel(test_data, pred_data)
+
+def bais_test_female(net):
+    print("\n\n ---------------------------------FEMALE BIAS REPORT--------------------------\n\n")
+    
+   
+    data_transform = transforms.Compose([ transforms.Grayscale(num_output_channels=1),
+        transforms.ToTensor(),
+        transforms.Resize((constants.imageSize, constants.imageSize))])
+
+    
+    Female_testset = torchvision.datasets.ImageFolder(root=TESTFEMALE, transform=data_transform)
+    Female_testloader = torch.utils.data.DataLoader(Female_testset, batch_size=1, shuffle=True, num_workers=8)
+    image, test_data, pred_data = eval_model(net, Female_testloader, True)
+    data = {"images": image, "expected": test_data, "predicted": pred_data}
+    pd.DataFrame(data, columns=["images", "expected", "predicted"]).to_csv(path_or_buf='Female.csv')
+    metricsEvaluation.evaluateCNNModel(test_data, pred_data)
 
 if __name__ == '__main__':
-    ImageDataSetPrep("test")
+    #ImageDataSetPrep("test")
     data_transform = transforms.Compose([transforms.Grayscale(num_output_channels=1),
                                          transforms.ToTensor()])
     testset = torchvision.datasets.ImageFolder(root=constants.TEST, transform=data_transform)
 
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=True, num_workers=8)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=False, num_workers=8)
 
     PATH = "trained_cnn_Model.pt"
     if not os.path.exists(PATH):
@@ -189,10 +197,15 @@ if __name__ == '__main__':
         print("Loading Existing Train Model from ....",PATH)
         net = torch.load(PATH)
     
+    #bais_test_female(net)
+    #bais_test_male(net)
+    
     print("Evaluating the Test Data from ::",constants.TEST)
-    test_data, pred_data = eval_model(net, testloader,True)
-    data = {"images": image, "expected": test_data, "predicted": pred_data}
-    print(data)
-    pd.DataFrame(data, columns=["images", "expected", "predicted"]).to_csv(path_or_buf='output.csv')
+    image,test_data, pred_data = eval_model(net, testloader,True)
     metricsEvaluation.evaluateCNNModel(test_data, pred_data)
+    data = {"images": image, "expected": test_data, "predicted": pred_data}
+    pd.DataFrame(data, columns=["images", "expected", "predicted"]).to_csv(path_or_buf='output.csv')
    
+   
+
+    
